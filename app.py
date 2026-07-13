@@ -149,7 +149,7 @@ with col1:
     st.markdown("### 📊 ACTIVE PROFILE MATRIX")
     st.dataframe(input_data[['age', 'years_gaming', 'daily_playtime_hours', 'preferred_genre', 'platform', 'rank_tier']])
     
-    st.markdown("<br>", unsafe_with_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🚀 EXECUTE QUANTUM CHURN PROJECTION"):
         # Run prediction directly via your pipeline
         prediction = model_pipeline.predict(input_data)[0]
@@ -163,7 +163,7 @@ with col1:
                     <h1 style='color: #ff007f !important; font-size: 50px;'>{prediction_pct:.2f}%</h1>
                     <p>Player exhibits high probability of critical subscriber churn. Intervention recommended.</p>
                 </div>
-            """, unsafe_with_html=True)
+            """, unsafe_allow_html=True)
         else:
             st.markdown(f"""
                 <div class="metric-card">
@@ -171,7 +171,7 @@ with col1:
                     <h1 style='color: #00ffcc !important; font-size: 50px;'>{prediction_pct:.2f}%</h1>
                     <p>Retention signals within green tolerance limits. Low churn variance expected.</p>
                 </div>
-            """, unsafe_with_html=True)
+            """, unsafe_allow_html=True)
 
 with col2:
     st.markdown("### 🎮 TELEMETRY STATS")
@@ -181,7 +181,7 @@ with col2:
             <span style='color: #00ffcc;'>🏆 RANK TIER:</span> {rank_tier}<br>
             <span style='color: #7928ca;'>⏳ PLAYTIME:</span> {daily_playtime} Hrs/Day
         </div>
-    """, unsafe_with_html=True)
+    """, unsafe_allow_html=True)
     
     st.info("💡 Pro-Tip: Adjust player profile values on the left panel dynamically, then hit execute to run immediate analytical regressions.")
 
