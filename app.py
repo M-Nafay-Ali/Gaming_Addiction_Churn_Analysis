@@ -15,43 +15,49 @@ st.markdown("""
     <style>
     /* Main app background */
     .stApp {
-        background: radial-gradient(circle, #120c1f 0%, #05030a 100%);
-        color: #e0d5f5;
-        font-family: 'Courier New', Courier, monospace;
+        background: radial-gradient(circle, #120c1f 0%, #05030a 100%) !important;
+        color: #e0d5f5 !important;
+        font-family: 'Courier New', Courier, monospace !important;
     }
     
-    /* Neon titles and glowing headers */
-    h1, h2, h3 {
+    /* Neon titles and glowing headers (H1, H2, H3 fixed for visibility) */
+    h1, h2, h3, [data-testid="stMarkdownContainer"] h3 {
         color: #00ffcc !important;
-        text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
-        font-family: 'Impact', sans-serif;
-        letter-spacing: 2px;
+        text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc !important;
+        font-family: 'Impact', sans-serif !important;
+        letter-spacing: 2px !important;
     }
     
+    /* Secondary text labels visibility */
+    span, p, label, [data-testid="stWidgetLabel"] p {
+        color: #e0d5f5 !important;
+        font-weight: bold !important;
+    }
+
     /* Glowing sidebar panel */
     [data-testid="stSidebar"] {
         background-color: #0d0818 !important;
-        border-right: 2px solid #ff007f;
-        box-shadow: 5px 0px 15px rgba(255, 0, 127, 0.3);
+        border-right: 2px solid #ff007f !important;
+        box-shadow: 5px 0px 15px rgba(255, 0, 127, 0.3) !important;
     }
     
     /* Neon game-panel containers */
     .metric-card {
-        background: rgba(20, 12, 35, 0.75);
-        border: 2px solid #00ffcc;
-        border-radius: 10px;
-        padding: 20px;
-        box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
-        text-align: center;
+        background: rgba(20, 12, 35, 0.75) !important;
+        border: 2px solid #00ffcc !important;
+        border-radius: 10px !important;
+        padding: 20px !important;
+        box-shadow: 0 0 15px rgba(0, 255, 204, 0.2) !important;
+        text-align: center !important;
     }
     
     .danger-card {
-        background: rgba(35, 10, 25, 0.8);
-        border: 2px solid #ff007f;
-        border-radius: 10px;
-        padding: 20px;
-        box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
-        text-align: center;
+        background: rgba(35, 10, 25, 0.8) !important;
+        border: 2px solid #ff007f !important;
+        border-radius: 10px !important;
+        padding: 20px !important;
+        box-shadow: 0 0 15px rgba(255, 0, 127, 0.4) !important;
+        text-align: center !important;
     }
     
     /* Custom arcade button style */
@@ -59,14 +65,14 @@ st.markdown("""
         background: linear-gradient(45deg, #ff007f, #7928ca) !important;
         color: white !important;
         border: 2px solid #00ffcc !important;
-        box-shadow: 0 0 10px #ff007f;
+        box-shadow: 0 0 10px #ff007f !important;
         font-weight: bold !important;
-        letter-spacing: 1px;
-        transition: all 0.3s ease;
+        letter-spacing: 1px !important;
+        transition: all 0.3s ease !important;
     }
     .stButton>button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 0 20px #00ffcc;
+        transform: scale(1.05) !important;
+        box-shadow: 0 0 20px #00ffcc !important;
         color: #00ffcc !important;
     }
     </style>
@@ -81,48 +87,62 @@ st.markdown("---")
 @st.cache_resource
 def load_pipeline():
     try:
-        # Looks for the file in your GitHub repo directory
         return joblib.load("final_churn_model.pkl")
     except:
         return None
 
 model_pipeline = load_pipeline()
 
-# Inform user if the pickle binary is missing
 if model_pipeline is None:
     st.error("⚠️ 'final_churn_model.pkl' not found! Make sure to upload the model file to your GitHub repository.")
     st.stop()
 
-# 4. Interactive Sidebar Inputs (Gaming Variables)
+# --- DYNAMIC CATEGORY EXTRACTION TO PREVENT VALUE ERRORS ---
+preprocessor = model_pipeline.named_steps['preprocessor']
+
+# Extract Ordinal features mapping
+ord_features = preprocessor.transformers_[1][2]
+ord_encoder = preprocessor.transformers_[1][1].named_steps['ordinal']
+ord_categories_dict = {col: list(cats) for col, cats in zip(ord_features, ord_encoder.categories_)}
+
+# Extract One-Hot features mapping
+ohe_features = preprocessor.transformers_[2][2]
+ohe_encoder = preprocessor.transformers_[2][1].named_steps['Label_enc']
+ohe_categories_dict = {col: list(cats) for col, cats in zip(ohe_features, ohe_encoder.categories_)}
+
+def get_cats(col_name, default_list):
+    if col_name in ord_categories_dict:
+        return ord_categories_dict[col_name]
+    if col_name in ohe_categories_dict:
+        return ohe_categories_dict[col_name]
+    return default_list
+
+# 4. Interactive Sidebar Inputs
 st.sidebar.markdown("## ⚙️ PLAYER PROFILE VARIABLES")
 
-# Numerical Input Sliders
 age = st.sidebar.slider("Player Age", 13, 40, 22)
 years_gaming = st.sidebar.slider("Years Gaming Experience", 1, 25, 9)
 daily_playtime = st.sidebar.slider("Daily Playtime (Hours)", 0.5, 12.0, 6.0)
 weekly_sessions = st.sidebar.slider("Weekly Play Sessions", 1, 15, 7)
 gpa_score = st.sidebar.slider("GPA / Performance Score", 1.0, 4.0, 3.0)
 
-# Categorical Dropdowns (Matches your preprocessing setup)
-gender = st.sidebar.selectbox("Gender", ["Male", "Female"])
-country = st.sidebar.selectbox("Country", ["India", "USA", "Brazil", "South Korea", "Japan", "Other"])
-preferred_genre = st.sidebar.selectbox("Preferred Genre", ["Sandbox", "RPG", "Strategy", "MMORPG", "FPS", "Other"])
-behavioral_cluster = st.sidebar.selectbox("Behavioral Cluster", ["Casual", "Hardcore", "Social", "Achiever"])
+gender = st.sidebar.selectbox("Gender", get_cats("gender", ["Male", "Female"]))
+country = st.sidebar.selectbox("Country", get_cats("country", ["India", "USA"]))
+preferred_genre = st.sidebar.selectbox("Preferred Genre", get_cats("preferred_genre", ["Sandbox", "RPG"]))
+behavioral_cluster = st.sidebar.selectbox("Behavioral Cluster", get_cats("behavioral_cluster", ["Casual"]))
 
-occupation = st.sidebar.selectbox("Occupation", ["Student", "Employed", "Unemployed", "Streamer/Contest Creator"])
-income_level = st.sidebar.selectbox("Income Level", ["Low", "Middle", "Upper-Middle", "High"])
-platform = st.sidebar.selectbox("Platform", ["PC", "Mobile", "PC+Mobile", "Console", "PC+Console"])
-device_type = st.sidebar.selectbox("Device Type", ["Laptop", "Mixed", "High-end PC", "Console", "Mobile"])
-rank_tier = st.sidebar.selectbox("Rank Tier", ["Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master"])
-subscription_status = st.sidebar.selectbox("Subscription Status", ["Active", "Inactive"])
+occupation = st.sidebar.selectbox("Occupation", get_cats("occupation", ["Student", "Employed"]))
+income_level = st.sidebar.selectbox("Income Level", get_cats("income_level", ["Low", "Middle"]))
+platform = st.sidebar.selectbox("Platform", get_cats("platform", ["PC", "Mobile"]))
+device_type = st.sidebar.selectbox("Device Type", get_cats("device_type", ["Laptop", "Mixed"]))
+rank_tier = st.sidebar.selectbox("Rank Tier", get_cats("rank_tier", ["Bronze", "Gold"]))
+subscription_status = st.sidebar.selectbox("Subscription Status", get_cats("subscription_status", ["Active"]))
 
-# Optional Extra Mental Health Indicators
 stress_score = st.sidebar.slider("Stress Score", 0.0, 10.0, 5.0)
 depression_indicator = st.sidebar.slider("Depression Indicator Value", 0.0, 10.0, 4.0)
 mental_health_risk = st.sidebar.slider("Mental Health Risk Score", 0.0, 10.0, 5.0)
 
 # 5. Preparing Data for the Prediction Pipeline
-# Create a row matching the original structure layout of df
 input_data = pd.DataFrame([{
     'age': age, 'years_gaming': years_gaming, 'daily_playtime_hours': daily_playtime,
     'weekly_play_sessions': weekly_sessions, 'gender': gender, 'country': country,
@@ -133,13 +153,10 @@ input_data = pd.DataFrame([{
     'depression_indicator': depression_indicator, 'mental_health_risk_score': mental_health_risk
 }])
 
-# Fill in defaults for any training features not explicitly chosen in sliders
-# to protect the input pipeline shape
 for col in model_pipeline.feature_names_in_:
     if col not in input_data.columns:
         input_data[col] = 0.0
 
-# Ensure strict matching column order
 input_data = input_data[model_pipeline.feature_names_in_]
 
 # 6. Main Terminal Console Interface Layout
@@ -151,7 +168,6 @@ with col1:
     
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🚀 EXECUTE QUANTUM CHURN PROJECTION"):
-        # Run prediction directly via your pipeline
         prediction = model_pipeline.predict(input_data)[0]
         prediction_pct = float(prediction * 100)
         
@@ -161,7 +177,7 @@ with col1:
                 <div class="danger-card">
                     <h2 style='color: #ff007f !important;'>🔴 HIGH RISK PROFILE DETECTED</h2>
                     <h1 style='color: #ff007f !important; font-size: 50px;'>{prediction_pct:.2f}%</h1>
-                    <p>Player exhibits high probability of critical subscriber churn. Intervention recommended.</p>
+                    <p style='color: #e0d5f5 !important;'>Player exhibits high probability of critical subscriber churn. Intervention recommended.</p>
                 </div>
             """, unsafe_allow_html=True)
         else:
@@ -169,14 +185,14 @@ with col1:
                 <div class="metric-card">
                     <h2 style='color: #00ffcc !important;'>🟢 STABLE PLAYER PROFILE</h2>
                     <h1 style='color: #00ffcc !important; font-size: 50px;'>{prediction_pct:.2f}%</h1>
-                    <p>Retention signals within green tolerance limits. Low churn variance expected.</p>
+                    <p style='color: #e0d5f5 !important;'>Retention signals within green tolerance limits. Low churn variance expected.</p>
                 </div>
             """, unsafe_allow_html=True)
 
 with col2:
     st.markdown("### 🎮 TELEMETRY STATS")
     st.markdown(f"""
-        <div style='background: rgba(10, 5, 20, 0.6); padding: 15px; border-radius: 8px; border: 1px dashed #7928ca; margin-bottom: 10px;'>
+        <div style='background: rgba(10, 5, 20, 0.6); padding: 15px; border-radius: 8px; border: 1px dashed #7928ca; margin-bottom: 10px; color: #e0d5f5;'>
             <span style='color: #ff007f;'>🎮 PLATFORM:</span> {platform}<br>
             <span style='color: #00ffcc;'>🏆 RANK TIER:</span> {rank_tier}<br>
             <span style='color: #7928ca;'>⏳ PLAYTIME:</span> {daily_playtime} Hrs/Day
@@ -184,4 +200,3 @@ with col2:
     """, unsafe_allow_html=True)
     
     st.info("💡 Pro-Tip: Adjust player profile values on the left panel dynamically, then hit execute to run immediate analytical regressions.")
-
