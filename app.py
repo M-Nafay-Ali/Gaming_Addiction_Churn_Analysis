@@ -20,7 +20,7 @@ st.markdown("""
         font-family: 'Courier New', Courier, monospace !important;
     }
     
-    /* Neon titles and glowing headers (H1, H2, H3 fixed for visibility) */
+    /* Neon titles and glowing headers */
     h1, h2, h3, [data-testid="stMarkdownContainer"] h3 {
         color: #00ffcc !important;
         text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc !important;
@@ -97,16 +97,18 @@ if model_pipeline is None:
     st.error("⚠️ 'final_churn_model.pkl' not found! Make sure to upload the model file to your GitHub repository.")
     st.stop()
 
-# --- DYNAMIC CATEGORY EXTRACTION TO PREVENT VALUE ERRORS ---
+# --- DYNAMIC CATEGORY EXTRACTION & DATA ALIGNMENT ---
 preprocessor = model_pipeline.named_steps['preprocessor']
 
-# Extract Ordinal features mapping
-ord_features = preprocessor.transformers_[1][2]
+# Extract known features per pipeline branch
+num_features = list(preprocessor.transformers_[0][2])
+ord_features = list(preprocessor.transformers_[1][2])
+ohe_features = list(preprocessor.transformers_[2][2])
+
+# Extract category items safely
 ord_encoder = preprocessor.transformers_[1][1].named_steps['ordinal']
 ord_categories_dict = {col: list(cats) for col, cats in zip(ord_features, ord_encoder.categories_)}
 
-# Extract One-Hot features mapping
-ohe_features = preprocessor.transformers_[2][2]
 ohe_encoder = preprocessor.transformers_[2][1].named_steps['Label_enc']
 ohe_categories_dict = {col: list(cats) for col, cats in zip(ohe_features, ohe_encoder.categories_)}
 
@@ -153,10 +155,19 @@ input_data = pd.DataFrame([{
     'depression_indicator': depression_indicator, 'mental_health_risk_score': mental_health_risk
 }])
 
+# Type-safe verification loop for unexposed features
 for col in model_pipeline.feature_names_in_:
     if col not in input_data.columns:
-        input_data[col] = 0.0
+        if col in num_features:
+            input_data[col] = 0.0
+        elif col in ord_features:
+            input_data[col] = ord_categories_dict[col][0]
+        elif col in ohe_features:
+            input_data[col] = ohe_categories_dict[col][0]
+        else:
+            input_data[col] = 0.0
 
+# Align columns perfectly with training shape
 input_data = input_data[model_pipeline.feature_names_in_]
 
 # 6. Main Terminal Console Interface Layout
