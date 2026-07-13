@@ -33,14 +33,13 @@ The model processes multi-dimensional player profile metrics to evaluate retenti
 ├── final_churn_model.pkl       # Saved production-grade Random Forest Pipeline binary
 ├── requirements.txt            # Explicit software dependencies (scikit-learn v1.6.1)
 └── gaming_churn_notebook.ipynb # Notebook containing Pipeline design, training loops, & EDA
-
 ---
+```
 
----
 
 > ### 🎮 DEVELOPER PANEL // CONNECT
 > 
 > * **GitHub Profile:** [@M-Nafay-Ali](https://github.com/M-Nafay-Ali)
 > * **LinkedIn:** [https://www.linkedin.com/in/mohammed-nafay-ali-16519138a?utm_source=share_via&utm_content=profile&utm_medium=member_android]
 > * **Live Deployment Terminal:** [CHURN_HUNTER App](https://gamingaddictionchurnanalysis.streamlit.app/)
->* **Email:-**englandengland271@gmail.com
+> * **Email:-** englandengland271@gmail.com
