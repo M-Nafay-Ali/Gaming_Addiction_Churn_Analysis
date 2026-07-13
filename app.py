@@ -70,7 +70,7 @@ st.markdown("""
         color: #00ffcc !important;
     }
     </style>
-""", unsafe_with_html=True)
+""", unsafe_allow_html=True)
 
 # 2. Header and Intro
 st.title("🕹️ CHURN_HUNTER // PREDICTIVE TERMINAL")
